@@ -2,47 +2,47 @@
 session_start();
 
 // Configuración de la base de datos
-$db_host = "localhost";
+$db_host = "containers-us-west-112.railway.app";
 $db_user = "root";
-$db_pass = "";
-$db_name = "Proyecto";
+$db_pass = "AyeDy0FZxAeLbIAcS0pP";
+$db_name = "railway";
+$db_port = "7627"; 
 
 // Conexión a la base de datos
-$conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
+$conn = new mysqli($db_host, $db_user, $db_pass, $db_name, $db_port);
 
 if ($conn->connect_error) {
     die("Error de conexión a la base de datos: " . $conn->connect_error);
 }
 
-// Obtener datos del formulario (asegúrate de validar y sanear los datos de entrada)
-$username = $conn->real_escape_string($_POST['username']);
-$password = $conn->real_escape_string($_POST['password']);
+// Obtener datos del formulario
+$identificacion = $_POST['identificacion'];
+$password = $_POST['contraseña'];
 
-// Consulta SQL segura para verificar las credenciales (evita la inyección SQL)
-$query = "SELECT * FROM usuarios WHERE username = '$username' AND password = '$password'";
+// Consulta SQL para autenticar al usuario
+$query = "SELECT * FROM usuarios WHERE identificacion = '$identificacion' AND contraseña = '$password'";
 
 $result = $conn->query($query);
 
-if ($result) {
-    if ($result->num_rows == 1) {
-        // Credenciales válidas, iniciar sesión
-        $row = $result->fetch_assoc();
-        $_SESSION['username'] = $row['username'];
-        $_SESSION['role'] = $row['role'];
+if (!$result) {
+    die("Error en la consulta SQL: " . $conn->error);
+}
 
-        // Redirigir según el rol
-        if ($_SESSION['role'] == 'admin') {
-            echo "<script>alert('Inicio de sesión exitoso como administrador.'); window.location.href = 'admin.php';</script>";
-        } elseif ($_SESSION['role'] == 'profesor') {
-            echo "<script>alert('Inicio de sesión exitoso como profesor.'); window.location.href = 'profesor.php';</script>";
-        }
-    } else {
-        // Credenciales inválidas
-        echo "<script>alert('Credenciales inválidas, por favor, inténtalo nuevamente.'); window.location.href = 'index.html';</script>";
+if ($result->num_rows == 1) {
+    // Usuario autenticado, iniciar sesión
+    $row = $result->fetch_assoc();
+    $_SESSION['username'] = $row['identificacion'];
+    $_SESSION['role'] = $row['id_perfil'];
+
+    // Redirigir según el rol (asumiendo que el campo 'id_perfil' representa los roles)
+    if ($_SESSION['role'] == 1) {
+        echo "<script>alert('Inicio de sesión exitoso como administrador.'); window.location.href = 'admin.php';</script>";
+    } elseif ($_SESSION['role'] == 2) {
+        echo "<script>alert('Inicio de sesión exitoso como profesor.'); window.location.href = 'profesor.php';</script>";
     }
 } else {
-    // Error en la consulta SQL
-    echo "<script>alert('Error en la consulta SQL, por favor, inténtalo nuevamente.'); window.location.href = 'index.html';</script>";
+    // Usuario no autenticado
+    echo "<script>alert('Credenciales incorrectas, por favor, inténtalo nuevamente.'); window.location.href = 'index.html';</script>";
 }
 
 $conn->close();
